@@ -1,7 +1,8 @@
 'use strict';
 
-const { TextInputBuilder: BuildersTextInput, isJSONEncodable } = require('@discordjs/builders');
-const { toSnakeCase } = require('../util/Transformers');
+const { TextInputBuilder: BuildersTextInput } = require('@discordjs/builders');
+const { isJSONEncodable } = require('@discordjs/util');
+const { toSnakeCase } = require('../util/Transformers.js');
 
 /**
  * Represents a text input builder.
@@ -14,20 +15,17 @@ class TextInputBuilder extends BuildersTextInput {
 
   /**
    * Creates a new text input builder from JSON data
-   * @param {JSONEncodable<APITextInputComponent>|APITextInputComponent} other The other data
+   * @param {TextInputBuilder|TextInputComponent|APITextInputComponent} other The other data
    * @returns {TextInputBuilder}
    */
   static from(other) {
-    if (isJSONEncodable(other)) {
-      return new this(other.toJSON());
-    }
-    return new this(other);
+    return new this(isJSONEncodable(other) ? other.toJSON() : other);
   }
 }
 
-module.exports = TextInputBuilder;
+exports.TextInputBuilder = TextInputBuilder;
 
 /**
  * @external BuildersTextInput
- * @see {@link https://discord.js.org/#/docs/builders/main/class/TextInputBuilder}
+ * @see {@link https://discord.js.org/docs/packages/builders/stable/TextInputBuilder:Class}
  */
