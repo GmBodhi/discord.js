@@ -1,8 +1,9 @@
 'use strict';
 
-const { SelectMenuBuilder: BuildersSelectMenu, isJSONEncodable, normalizeArray } = require('@discordjs/builders');
-const { toSnakeCase } = require('../util/Transformers');
-const { resolvePartialEmoji } = require('../util/Util');
+const { SelectMenuBuilder: BuildersSelectMenu, normalizeArray } = require('@discordjs/builders');
+const { isJSONEncodable } = require('@discordjs/util');
+const { toSnakeCase } = require('../util/Transformers.js');
+const { resolvePartialEmoji } = require('../util/Util.js');
 
 /**
  * Class used to build select menu components to be sent through the API
@@ -23,8 +24,8 @@ class StringSelectMenuBuilder extends BuildersSelectMenu {
 
   /**
    * Normalizes a select menu option emoji
-   * @param {SelectMenuOptionData|JSONEncodable<APISelectMenuOption>} selectMenuOption The option to normalize
-   * @returns {SelectMenuOptionBuilder|APISelectMenuOption}
+   * @param {SelectMenuComponentOptionData|APISelectMenuOption} selectMenuOption The option to normalize
+   * @returns {StringSelectMenuOptionBuilder|APISelectMenuOption}
    * @private
    */
   static normalizeEmoji(selectMenuOption) {
@@ -59,7 +60,7 @@ class StringSelectMenuBuilder extends BuildersSelectMenu {
 
   /**
    * Creates a new select menu builder from json data
-   * @param {JSONEncodable<APISelectMenuComponent> | APISelectMenuComponent} other The other data
+   * @param {StringSelectMenuBuilder|StringSelectMenuComponent|APIStringSelectComponent} other The other data
    * @returns {StringSelectMenuBuilder}
    */
   static from(other) {
@@ -70,9 +71,9 @@ class StringSelectMenuBuilder extends BuildersSelectMenu {
   }
 }
 
-module.exports = StringSelectMenuBuilder;
+exports.StringSelectMenuBuilder = StringSelectMenuBuilder;
 
 /**
  * @external BuildersSelectMenu
- * @see {@link https://discord.js.org/#/docs/builders/main/class/SelectMenuBuilder}
+ * @see {@link https://discord.js.org/docs/packages/builders/stable/StringSelectMenuBuilder:Class}
  */
