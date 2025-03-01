@@ -2,9 +2,9 @@
 
 const { Collection } = require('@discordjs/collection');
 const { PermissionFlagsBits } = require('discord-api-types/v10');
-const GuildChannel = require('./GuildChannel');
-const TextBasedChannel = require('./interfaces/TextBasedChannel');
-const MessageManager = require('../managers/MessageManager');
+const { GuildChannel } = require('./GuildChannel.js');
+const { TextBasedChannel } = require('./interfaces/TextBasedChannel.js');
+const { GuildMessageManager } = require('../managers/GuildMessageManager.js');
 
 /**
  * Represents a voice-based guild channel on Discord.
@@ -16,9 +16,9 @@ class BaseGuildVoiceChannel extends GuildChannel {
     super(guild, data, client, false);
     /**
      * A manager of the messages sent to this channel
-     * @type {MessageManager}
+     * @type {GuildMessageManager}
      */
-    this.messages = new MessageManager(this);
+    this.messages = new GuildMessageManager(this);
 
     /**
      * If the guild considers this channel NSFW
@@ -229,6 +229,6 @@ class BaseGuildVoiceChannel extends GuildChannel {
   setNSFW() {}
 }
 
-TextBasedChannel.applyToClass(BaseGuildVoiceChannel, true, ['lastPinAt']);
+TextBasedChannel.applyToClass(BaseGuildVoiceChannel, ['lastPinAt']);
 
-module.exports = BaseGuildVoiceChannel;
+exports.BaseGuildVoiceChannel = BaseGuildVoiceChannel;
