@@ -3,12 +3,12 @@
 const process = require('node:process');
 const { Collection } = require('@discordjs/collection');
 const { Routes } = require('discord-api-types/v10');
-const CachedManager = require('./CachedManager');
-const { DiscordjsTypeError, ErrorCodes } = require('../errors');
-const { Role } = require('../structures/Role');
-const DataResolver = require('../util/DataResolver');
-const PermissionsBitField = require('../util/PermissionsBitField');
-const { setPosition, resolveColor } = require('../util/Util');
+const { CachedManager } = require('./CachedManager.js');
+const { DiscordjsTypeError, ErrorCodes } = require('../errors/index.js');
+const { Role } = require('../structures/Role.js');
+const { resolveImage } = require('../util/DataResolver.js');
+const { PermissionsBitField } = require('../util/PermissionsBitField.js');
+const { setPosition, resolveColor } = require('../util/Util.js');
 
 let cacheWarningEmitted = false;
 
@@ -48,7 +48,7 @@ class RoleManager extends CachedManager {
    * Obtains a role from Discord, or the role cache if they're already available.
    * @param {Snowflake} [id] The role's id
    * @param {BaseFetchOptions} [options] Additional options for this fetch
-   * @returns {Promise<?Role|Collection<Snowflake, Role>>}
+   * @returns {Promise<Role|Collection<Snowflake, Role>>}
    * @example
    * // Fetch all roles from the guild
    * message.guild.roles.fetch()
@@ -61,16 +61,20 @@ class RoleManager extends CachedManager {
    *   .catch(console.error);
    */
   async fetch(id, { cache = true, force = false } = {}) {
-    if (id && !force) {
+    if (!id) {
+      const data = await this.client.rest.get(Routes.guildRoles(this.guild.id));
+      const roles = new Collection();
+      for (const role of data) roles.set(role.id, this._add(role, cache));
+      return roles;
+    }
+
+    if (!force) {
       const existing = this.cache.get(id);
       if (existing) return existing;
     }
 
-    // We cannot fetch a single role, as of this commit's date, Discord API throws with 405
-    const data = await this.client.rest.get(Routes.guildRoles(this.guild.id));
-    const roles = new Collection();
-    for (const role of data) roles.set(role.id, this._add(role, cache));
-    return id ? roles.get(id) ?? null : roles;
+    const data = await this.client.rest.get(Routes.guildRole(this.guild.id, id));
+    return this._add(data, cache);
   }
 
   /**
@@ -139,8 +143,8 @@ class RoleManager extends CachedManager {
     color &&= resolveColor(color);
     if (permissions !== undefined) permissions = new PermissionsBitField(permissions);
     if (icon) {
-      const guildEmojiURL = this.guild.emojis.resolve(icon)?.url;
-      icon = guildEmojiURL ? await DataResolver.resolveImage(guildEmojiURL) : await DataResolver.resolveImage(icon);
+      const guildEmojiURL = this.guild.emojis.resolve(icon)?.imageURL();
+      icon = guildEmojiURL ? await resolveImage(guildEmojiURL) : await resolveImage(icon);
       if (typeof icon !== 'string') icon = undefined;
     }
 
@@ -182,17 +186,17 @@ class RoleManager extends CachedManager {
    *   .catch(console.error);
    */
   async edit(role, options) {
-    role = this.resolve(role);
-    if (!role) throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'role', 'RoleResolvable');
+    const resolvedRole = this.resolve(role);
+    if (!resolvedRole) throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'role', 'RoleResolvable');
 
     if (typeof options.position === 'number') {
-      await this.setPosition(role, options.position, { reason: options.reason });
+      await this.setPosition(resolvedRole, options.position, { reason: options.reason });
     }
 
     let icon = options.icon;
     if (icon) {
-      const guildEmojiURL = this.guild.emojis.resolve(icon)?.url;
-      icon = guildEmojiURL ? await DataResolver.resolveImage(guildEmojiURL) : await DataResolver.resolveImage(icon);
+      const guildEmojiURL = this.guild.emojis.resolve(icon)?.imageURL();
+      icon = guildEmojiURL ? await resolveImage(guildEmojiURL) : await resolveImage(icon);
       if (typeof icon !== 'string') icon = undefined;
     }
 
@@ -206,9 +210,12 @@ class RoleManager extends CachedManager {
       unicode_emoji: options.unicodeEmoji,
     };
 
-    const d = await this.client.rest.patch(Routes.guildRole(this.guild.id, role.id), { body, reason: options.reason });
+    const d = await this.client.rest.patch(Routes.guildRole(this.guild.id, resolvedRole.id), {
+      body,
+      reason: options.reason,
+    });
 
-    const clone = role._clone();
+    const clone = resolvedRole._clone();
     clone._patch(d);
     return clone;
   }
@@ -243,10 +250,10 @@ class RoleManager extends CachedManager {
    *   .catch(console.error);
    */
   async setPosition(role, position, { relative, reason } = {}) {
-    role = this.resolve(role);
-    if (!role) throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'role', 'RoleResolvable');
+    const resolvedRole = this.resolve(role);
+    if (!resolvedRole) throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'role', 'RoleResolvable');
     const updatedRoles = await setPosition(
-      role,
+      resolvedRole,
       position,
       relative,
       this.guild._sortedRoles(),
@@ -259,7 +266,7 @@ class RoleManager extends CachedManager {
       guild_id: this.guild.id,
       roles: updatedRoles,
     });
-    return role;
+    return resolvedRole;
   }
 
   /**
@@ -280,16 +287,16 @@ class RoleManager extends CachedManager {
    */
   async setPositions(rolePositions) {
     // Make sure rolePositions are prepared for API
-    rolePositions = rolePositions.map(o => ({
-      id: this.resolveId(o.role),
-      position: o.position,
+    const resolvedRolePositions = rolePositions.map(rolePosition => ({
+      id: this.resolveId(rolePosition.role),
+      position: rolePosition.position,
     }));
 
     // Call the API to update role positions
-    await this.client.rest.patch(Routes.guildRoles(this.guild.id), { body: rolePositions });
+    await this.client.rest.patch(Routes.guildRoles(this.guild.id), { body: resolvedRolePositions });
     return this.client.actions.GuildRolesPositionUpdate.handle({
       guild_id: this.guild.id,
-      roles: rolePositions,
+      roles: resolvedRolePositions,
     }).guild;
   }
 
@@ -307,11 +314,14 @@ class RoleManager extends CachedManager {
       throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'role', 'Role nor a Snowflake');
     }
 
-    if (resolvedRole1.position === resolvedRole2.position) {
+    const role1Position = resolvedRole1.position;
+    const role2Position = resolvedRole2.position;
+
+    if (role1Position === role2Position) {
       return Number(BigInt(resolvedRole2.id) - BigInt(resolvedRole1.id));
     }
 
-    return resolvedRole1.position - resolvedRole2.position;
+    return role1Position - role2Position;
   }
 
   /**
@@ -354,4 +364,4 @@ class RoleManager extends CachedManager {
   }
 }
 
-module.exports = RoleManager;
+exports.RoleManager = RoleManager;

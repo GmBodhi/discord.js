@@ -2,9 +2,9 @@
 
 const { Collection } = require('@discordjs/collection');
 const { Routes } = require('discord-api-types/v10');
-const DataManager = require('./DataManager');
-const { DiscordjsTypeError, ErrorCodes } = require('../errors');
-const { Role } = require('../structures/Role');
+const { DataManager } = require('./DataManager.js');
+const { DiscordjsTypeError, ErrorCodes } = require('../errors/index.js');
+const { Role } = require('../structures/Role.js');
 
 /**
  * Manages API methods for roles of a GuildMember and stores their cache.
@@ -101,6 +101,8 @@ class GuildMemberRoleManager extends DataManager {
 
   /**
    * Adds a role (or multiple roles) to the member.
+   *
+   * <info>Uses the idempotent PUT route for singular roles, otherwise PATCHes the underlying guild member</info>
    * @param {RoleResolvable|RoleResolvable[]|Collection<Snowflake, Role>} roleOrRoles The role or roles to add
    * @param {string} [reason] Reason for adding the role(s)
    * @returns {Promise<GuildMember>}
@@ -119,8 +121,8 @@ class GuildMemberRoleManager extends DataManager {
       const newRoles = [...new Set(resolvedRoles.concat(...this.cache.keys()))];
       return this.set(newRoles, reason);
     } else {
-      roleOrRoles = this.guild.roles.resolveId(roleOrRoles);
-      if (roleOrRoles === null) {
+      const resolvedRoleId = this.guild.roles.resolveId(roleOrRoles);
+      if (resolvedRoleId === null) {
         throw new DiscordjsTypeError(
           ErrorCodes.InvalidType,
           'roles',
@@ -128,16 +130,18 @@ class GuildMemberRoleManager extends DataManager {
         );
       }
 
-      await this.client.rest.put(Routes.guildMemberRole(this.guild.id, this.member.id, roleOrRoles), { reason });
+      await this.client.rest.put(Routes.guildMemberRole(this.guild.id, this.member.id, resolvedRoleId), { reason });
 
       const clone = this.member._clone();
-      clone._roles = [...this.cache.keys(), roleOrRoles];
+      clone._roles = [...this.cache.keys(), resolvedRoleId];
       return clone;
     }
   }
 
   /**
    * Removes a role (or multiple roles) from the member.
+   *
+   * <info>Uses the idempotent DELETE route for singular roles, otherwise PATCHes the underlying guild member</info>
    * @param {RoleResolvable|RoleResolvable[]|Collection<Snowflake, Role>} roleOrRoles The role or roles to remove
    * @param {string} [reason] Reason for removing the role(s)
    * @returns {Promise<GuildMember>}
@@ -156,8 +160,8 @@ class GuildMemberRoleManager extends DataManager {
       const newRoles = this.cache.filter(role => !resolvedRoles.includes(role.id));
       return this.set(newRoles, reason);
     } else {
-      roleOrRoles = this.guild.roles.resolveId(roleOrRoles);
-      if (roleOrRoles === null) {
+      const resolvedRoleId = this.guild.roles.resolveId(roleOrRoles);
+      if (resolvedRoleId === null) {
         throw new DiscordjsTypeError(
           ErrorCodes.InvalidType,
           'roles',
@@ -165,10 +169,10 @@ class GuildMemberRoleManager extends DataManager {
         );
       }
 
-      await this.client.rest.delete(Routes.guildMemberRole(this.guild.id, this.member.id, roleOrRoles), { reason });
+      await this.client.rest.delete(Routes.guildMemberRole(this.guild.id, this.member.id, resolvedRoleId), { reason });
 
       const clone = this.member._clone();
-      const newRoles = this.cache.filter(role => role.id !== roleOrRoles);
+      const newRoles = this.cache.filter(role => role.id !== resolvedRoleId);
       clone._roles = [...newRoles.keys()];
       return clone;
     }
@@ -201,4 +205,4 @@ class GuildMemberRoleManager extends DataManager {
   }
 }
 
-module.exports = GuildMemberRoleManager;
+exports.GuildMemberRoleManager = GuildMemberRoleManager;
