@@ -1,9 +1,9 @@
 'use strict';
 
 const { InteractionResponseType, Routes } = require('discord-api-types/v10');
-const BaseInteraction = require('./BaseInteraction');
-const CommandInteractionOptionResolver = require('./CommandInteractionOptionResolver');
-const { DiscordjsError, ErrorCodes } = require('../errors');
+const { BaseInteraction } = require('./BaseInteraction.js');
+const { CommandInteractionOptionResolver } = require('./CommandInteractionOptionResolver.js');
+const { DiscordjsError, ErrorCodes } = require('../errors/index.js');
 
 /**
  * Represents an autocomplete interaction.
@@ -87,7 +87,10 @@ class AutocompleteInteraction extends BaseInteraction {
       body: {
         type: InteractionResponseType.ApplicationCommandAutocompleteResult,
         data: {
-          choices: options,
+          choices: options.map(({ nameLocalizations, ...option }) => ({
+            ...this.client.options.jsonTransformer(option),
+            name_localizations: nameLocalizations,
+          })),
         },
       },
       auth: false,
@@ -96,4 +99,4 @@ class AutocompleteInteraction extends BaseInteraction {
   }
 }
 
-module.exports = AutocompleteInteraction;
+exports.AutocompleteInteraction = AutocompleteInteraction;

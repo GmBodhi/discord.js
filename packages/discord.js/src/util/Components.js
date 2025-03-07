@@ -1,8 +1,7 @@
 'use strict';
 
-// This file contains the typedefs for camel-cased JSON data
-const { ComponentBuilder } = require('@discordjs/builders');
 const { ComponentType } = require('discord-api-types/v10');
+
 /**
  * @typedef {Object} BaseComponentData
  * @property {ComponentType} type The type of component
@@ -63,14 +62,10 @@ const { ComponentType } = require('discord-api-types/v10');
  */
 
 /**
- * Any emoji data that can be used within a button
- * @typedef {APIMessageComponentEmoji|string} ComponentEmojiResolvable
- */
-
-/**
  * Transforms API data into a component
  * @param {APIMessageComponent|Component} data The data to create the component from
  * @returns {Component}
+ * @ignore
  */
 function createComponent(data) {
   if (data instanceof Component) {
@@ -99,59 +94,14 @@ function createComponent(data) {
   }
 }
 
-/**
- * Transforms API data into a component builder
- * @param {APIMessageComponent|ComponentBuilder} data The data to create the component from
- * @returns {ComponentBuilder}
- */
-function createComponentBuilder(data) {
-  if (data instanceof ComponentBuilder) {
-    return data;
-  }
+exports.createComponent = createComponent;
 
-  switch (data.type) {
-    case ComponentType.ActionRow:
-      return new ActionRowBuilder(data);
-    case ComponentType.Button:
-      return new ButtonBuilder(data);
-    case ComponentType.StringSelect:
-      return new StringSelectMenuBuilder(data);
-    case ComponentType.TextInput:
-      return new TextInputBuilder(data);
-    case ComponentType.UserSelect:
-      return new UserSelectMenuBuilder(data);
-    case ComponentType.RoleSelect:
-      return new RoleSelectMenuBuilder(data);
-    case ComponentType.MentionableSelect:
-      return new MentionableSelectMenuBuilder(data);
-    case ComponentType.ChannelSelect:
-      return new ChannelSelectMenuBuilder(data);
-    default:
-      return new ComponentBuilder(data);
-  }
-}
-
-module.exports = { createComponent, createComponentBuilder };
-
-const ActionRow = require('../structures/ActionRow');
-const ActionRowBuilder = require('../structures/ActionRowBuilder');
-const ButtonBuilder = require('../structures/ButtonBuilder');
-const ButtonComponent = require('../structures/ButtonComponent');
-const ChannelSelectMenuBuilder = require('../structures/ChannelSelectMenuBuilder');
-const ChannelSelectMenuComponent = require('../structures/ChannelSelectMenuComponent');
-const Component = require('../structures/Component');
-const MentionableSelectMenuBuilder = require('../structures/MentionableSelectMenuBuilder');
-const MentionableSelectMenuComponent = require('../structures/MentionableSelectMenuComponent');
-const RoleSelectMenuBuilder = require('../structures/RoleSelectMenuBuilder');
-const RoleSelectMenuComponent = require('../structures/RoleSelectMenuComponent');
-const StringSelectMenuBuilder = require('../structures/StringSelectMenuBuilder');
-const StringSelectMenuComponent = require('../structures/StringSelectMenuComponent');
-const TextInputBuilder = require('../structures/TextInputBuilder');
-const TextInputComponent = require('../structures/TextInputComponent');
-const UserSelectMenuBuilder = require('../structures/UserSelectMenuBuilder');
-const UserSelectMenuComponent = require('../structures/UserSelectMenuComponent');
-
-/**
- * @external JSONEncodable
- * @see {@link https://discord.js.org/#/docs/builders/main/typedef/JSONEncodable}
- */
+const { ActionRow } = require('../structures/ActionRow.js');
+const { ButtonComponent } = require('../structures/ButtonComponent.js');
+const { ChannelSelectMenuComponent } = require('../structures/ChannelSelectMenuComponent.js');
+const { Component } = require('../structures/Component.js');
+const { MentionableSelectMenuComponent } = require('../structures/MentionableSelectMenuComponent.js');
+const { RoleSelectMenuComponent } = require('../structures/RoleSelectMenuComponent.js');
+const { StringSelectMenuComponent } = require('../structures/StringSelectMenuComponent.js');
+const { TextInputComponent } = require('../structures/TextInputComponent.js');
+const { UserSelectMenuComponent } = require('../structures/UserSelectMenuComponent.js');

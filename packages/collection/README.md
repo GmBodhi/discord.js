@@ -9,10 +9,12 @@
 		<a href="https://www.npmjs.com/package/@discordjs/collection"><img src="https://img.shields.io/npm/v/@discordjs/collection.svg?maxAge=3600" alt="npm version" /></a>
 		<a href="https://www.npmjs.com/package/@discordjs/collection"><img src="https://img.shields.io/npm/dt/@discordjs/collection.svg?maxAge=3600" alt="npm downloads" /></a>
 		<a href="https://github.com/discordjs/discord.js/actions"><img src="https://github.com/discordjs/discord.js/actions/workflows/test.yml/badge.svg" alt="Build status" /></a>
-		<a href="https://codecov.io/gh/discordjs/discord.js" ><img src="https://codecov.io/gh/discordjs/discord.js/branch/main/graph/badge.svg?precision=2&flag=collection" alt="Code coverage" /></a>
+		<a href="https://github.com/discordjs/discord.js/commits/main/packages/collection"><img alt="Last commit." src="https://img.shields.io/github/last-commit/discordjs/discord.js?logo=github&logoColor=ffffff&path=packages%2Fcollection" /></a>
+		<a href="https://codecov.io/gh/discordjs/discord.js"><img src="https://codecov.io/gh/discordjs/discord.js/branch/main/graph/badge.svg?precision=2&flag=collection" alt="Code coverage" /></a>
 	</p>
 	<p>
 		<a href="https://vercel.com/?utm_source=discordjs&utm_campaign=oss"><img src="https://raw.githubusercontent.com/discordjs/discord.js/main/.github/powered-by-vercel.svg" alt="Vercel" /></a>
+		<a href="https://www.cloudflare.com"><img src="https://raw.githubusercontent.com/discordjs/discord.js/main/.github/powered-by-workers.png" alt="Cloudflare Workers" height="44" /></a>
 	</p>
 </div>
 
@@ -22,9 +24,9 @@
 
 ## Installation
 
-**Node.js 16.9.0 or newer is required.**
+**Node.js 22.12.0 or newer is required.**
 
-```sh-session
+```sh
 npm install @discordjs/collection
 yarn add @discordjs/collection
 pnpm add @discordjs/collection
@@ -35,7 +37,7 @@ pnpm add @discordjs/collection
 - [Website][website] ([source][website-source])
 - [Documentation][documentation]
 - [Guide][guide] ([source][guide-source])
-  See also the [Update Guide][guide-update], including updated and removed items in the library.
+  Also see the v13 to v14 [Update Guide][guide-update], which includes updated and removed items from the library.
 - [discord.js Discord server][discord]
 - [Discord API Discord server][discord-api]
 - [GitHub][source]
@@ -50,12 +52,11 @@ See [the contribution guide][contributing] if you'd like to submit a PR.
 
 ## Help
 
-If you don't understand something in the documentation, you are experiencing problems, or you just need a gentle
-nudge in the right direction, please don't hesitate to join our official [discord.js Server][discord].
+If you don't understand something in the documentation, you are experiencing problems, or you just need a gentle nudge in the right direction, please don't hesitate to join our official [discord.js Server][discord].
 
-[website]: https://discord.js.org/
+[website]: https://discord.js.org
 [website-source]: https://github.com/discordjs/discord.js/tree/main/apps/website
-[documentation]: https://discord.js.org/#/docs/collection
+[documentation]: https://discord.js.org/docs/packages/collection/stable
 [guide]: https://discordjs.guide/
 [guide-source]: https://github.com/discordjs/guide
 [guide-update]: https://discordjs.guide/additional-info/changes-in-v14.html

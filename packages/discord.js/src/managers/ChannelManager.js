@@ -1,12 +1,16 @@
 'use strict';
 
 const process = require('node:process');
+const { lazy } = require('@discordjs/util');
 const { Routes } = require('discord-api-types/v10');
-const CachedManager = require('./CachedManager');
-const { BaseChannel } = require('../structures/BaseChannel');
-const { createChannel } = require('../util/Channels');
-const { ThreadChannelTypes } = require('../util/Constants');
-const Events = require('../util/Events');
+const { CachedManager } = require('./CachedManager.js');
+const { BaseChannel } = require('../structures/BaseChannel.js');
+const { MessagePayload } = require('../structures/MessagePayload.js');
+const { createChannel } = require('../util/Channels.js');
+const { ThreadChannelTypes } = require('../util/Constants.js');
+const { Events } = require('../util/Events.js');
+
+const getMessage = lazy(() => require('../structures/Message.js').Message);
 
 let cacheWarningEmitted = false;
 
@@ -36,10 +40,10 @@ class ChannelManager extends CachedManager {
    * @name ChannelManager#cache
    */
 
-  _add(data, guild, { cache = true, allowUnknownGuild = false, fromInteraction = false } = {}) {
+  _add(data, guild, { cache = true, allowUnknownGuild = false } = {}) {
     const existing = this.cache.get(data.id);
     if (existing) {
-      if (cache) existing._patch(data, fromInteraction);
+      if (cache) existing._patch(data);
       guild?.channels?._add(existing);
       if (ThreadChannelTypes.includes(existing.type)) {
         existing.parent?.threads?._add(existing);
@@ -47,7 +51,7 @@ class ChannelManager extends CachedManager {
       return existing;
     }
 
-    const channel = createChannel(this.client, data, guild, { allowUnknownGuild, fromInteraction });
+    const channel = createChannel(this.client, data, guild, { allowUnknownGuild });
 
     if (!channel) {
       this.client.emit(Events.Debug, `Failed to find guild, or unknown type for channel ${data.id} ${data.type}`);
@@ -123,6 +127,52 @@ class ChannelManager extends CachedManager {
     const data = await this.client.rest.get(Routes.channel(id));
     return this._add(data, null, { cache, allowUnknownGuild });
   }
+
+  /**
+   * Creates a message in a channel.
+   * @param {TextChannelResolvable} channel The channel to send the message to
+   * @param {string|MessagePayload|MessageCreateOptions} options The options to provide
+   * @returns {Promise<Message>}
+   * @example
+   * // Send a basic message
+   * client.channels.createMessage(channel, 'hello!')
+   *   .then(message => console.log(`Sent message: ${message.content}`))
+   *   .catch(console.error);
+   * @example
+   * // Send a remote file
+   * client.channels.createMessage(channel, {
+   *   files: ['https://github.com/discordjs.png']
+   * })
+   *   .then(console.log)
+   *   .catch(console.error);
+   * @example
+   * // Send a local file
+   * client.channels.createMessage(channel, {
+   *   files: [{
+   *     attachment: 'entire/path/to/file.jpg',
+   *     name: 'file.jpg',
+   *     description: 'A description of the file'
+   *   }]
+   * })
+   *   .then(console.log)
+   *   .catch(console.error);
+   */
+  async createMessage(channel, options) {
+    let messagePayload;
+
+    if (options instanceof MessagePayload) {
+      messagePayload = options.resolveBody();
+    } else {
+      messagePayload = MessagePayload.create(this, options).resolveBody();
+    }
+
+    const resolvedChannelId = this.resolveId(channel);
+    const resolvedChannel = this.resolve(channel);
+    const { body, files } = await messagePayload.resolveFiles();
+    const data = await this.client.rest.post(Routes.channelMessages(resolvedChannelId), { body, files });
+
+    return resolvedChannel?.messages._add(data) ?? new (getMessage())(this.client, data);
+  }
 }
 
-module.exports = ChannelManager;
+exports.ChannelManager = ChannelManager;
